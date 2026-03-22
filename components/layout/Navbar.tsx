@@ -24,14 +24,11 @@ export function Navbar() {
         </nav>
         
         <div className="flex items-center gap-4">
-          <Link href="/login" className="text-sm font-medium text-zinc-300 hover:text-white transition-colors hidden sm:block">
-            Sign In
-          </Link>
           <Link 
             href="/dashboard"
             className="inline-flex h-9 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-black transition-all hover:bg-zinc-200 hover:scale-105 active:scale-95"
           >
-            Get Started
+            Go to Dashboard
           </Link>
         </div>
       </div>
