@@ -1,202 +1,345 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, AlertTriangle, CheckCircle2, Copy, FileText, Zap, Activity, Shield } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import {
+  Sparkles,
+  AlertTriangle,
+  CheckCircle2,
+  Copy,
+  FileText,
+  Activity,
+  Shield,
+  Check,
+  ArrowLeft,
+  BrainCircuit,
+  Mail,
+  Clock,
+  Flame,
+  X,
+} from "lucide-react";
+import { analyzeEmailThread } from "@/actions/email";
+import { EmailIntelligenceReport } from "@/types";
 
 export default function DashboardPage() {
   const [thread, setThread] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [showResults, setShowResults] = useState(false);
+  const [report, setReport] = useState<EmailIntelligenceReport | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!thread.trim()) return;
     setIsAnalyzing(true);
-    // Simulate our 5 parallel Groq API calls with a loading delay
-    setTimeout(() => {
+    setReport(null);
+    setErrorMsg(null);
+    try {
+      const data = await analyzeEmailThread(thread);
+      setReport(data);
+    } catch (error) {
+      console.error(error);
+      setErrorMsg(
+        "Failed to analyze thread. Please ensure the thread is long enough and try again.",
+      );
+    } finally {
       setIsAnalyzing(false);
-      setShowResults(true);
-    }, 2500);
+    }
+  };
+
+  const handleCopy = () => {
+    if (report?.reply) {
+      navigator.clipboard.writeText(report.reply);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#030712] text-white pt-24 pb-16 px-4 md:px-8 relative overflow-hidden">
-      {/* Dynamic Background Glows */}
-      <div className="absolute top-[-10%] left-1/2 -z-10 -translate-x-1/2 transform-gpu blur-[120px] pointer-events-none" aria-hidden="true">
-        <div className="aspect-1155/678 w-240 bg-linear-to-tr from-[#ff80b5] to-[#9089fc] opacity-20 rounded-full mix-blend-screen"></div>
+    <div className="flex h-screen w-full flex-col overflow-hidden bg-[#030712] text-white selection:bg-blue-500/30">
+      {/* Deep Ambient Background Glows */}
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <div className="absolute -left-[10%] -top-[20%] h-[50rem] w-[50rem] rounded-full bg-blue-500/10 mix-blend-screen blur-[120px]" />
+        <div className="absolute -bottom-[20%] -right-[10%] h-[50rem] w-[50rem] rounded-full bg-orange-500/10 mix-blend-screen blur-[120px]" />
       </div>
-      <div className="absolute top-[40%] text-center -left-40 -z-10 transform-gpu blur-[100px] pointer-events-none" aria-hidden="true">
-        <div className="aspect-square w-160 bg-linear-to-br from-[#9089fc] to-[#ff80b5] opacity-10 rounded-full mix-blend-screen"></div>
-      </div>
-      
-      <div className="max-w-6xl mx-auto space-y-8 relative z-10">
-        
-        {/* Header Section */}
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold font-heading text-white tracking-tight">Email Intelligence</h1>
-          <p className="text-zinc-400">Paste your chaotic email thread below, and our 5 AI agents will decode it instantly.</p>
-        </div>
 
-        {/* Input Textarea Block */}
-        <div className="rounded-2xl border border-white/10 bg-[#0a0f1c] p-1 shadow-2xl relative overflow-hidden group">
-          {/* Subtle gradient border effect when focused */}
-          <div className="absolute inset-0 bg-linear-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-focus-within:opacity-100 transition-opacity duration-500 pointer-events-none" />
-          
-          <div className="relative bg-[#030712] rounded-xl flex flex-col transition-all">
-            <textarea 
-              value={thread}
-              onChange={(e) => setThread(e.target.value)}
-              placeholder="Paste the email thread here... (e.g. strict client negotiation, angry support ticket, long inter-department chain)"
-              className="w-full min-h-[250px] bg-transparent p-6 text-zinc-300 placeholder-zinc-600 focus:outline-none resize-y"
+      {/* Top Application Header */}
+      <header className="relative z-20 flex h-16 shrink-0 items-center border-b border-white/5 bg-black/20 px-6 backdrop-blur-xl lg:px-8">
+        <Link
+          href="/"
+          className="group mr-8 inline-flex items-center gap-2 text-sm font-medium text-zinc-400 transition-colors hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+        </Link>
+        <div className="flex items-center">
+          <div className="relative h-10 w-40 overflow-hidden">
+            <Image
+              src="/logo.png"
+              alt="InboxIQ Logo"
+              fill
+              className="object-contain object-left"
+              priority
             />
-            
-            <div className="flex items-center justify-between p-4 border-t border-white/5 bg-white/[0.02] rounded-b-xl">
-              <div className="text-xs text-zinc-500 flex items-center gap-2">
-                <Shield className="h-4 w-4" /> Secure, private processing loop
-              </div>
-              <button 
-                onClick={handleAnalyze}
-                disabled={isAnalyzing || !thread.trim()}
-                className="flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <Activity className="h-4 w-4 animate-spin text-purple-600" /> Analyzing 5 Dimensions...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4 text-purple-600" /> Decode Thread
-                  </>
-                )}
-              </button>
-            </div>
           </div>
         </div>
+      </header>
 
-        {/* UI Results State */}
-        {showResults && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out fill-mode-both">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="h-px bg-white/10 flex-1"></div>
-              <div className="flex items-center gap-2 text-sm font-medium text-zinc-400">
-                <Zap className="h-4 w-4 text-purple-400" /> Intelligence Report
-              </div>
-              <div className="h-px bg-white/10 flex-1"></div>
+      {/* Split Pane Interface */}
+      <main className="relative z-10 flex flex-1 flex-col overflow-hidden lg:flex-row">
+        {/* Left Pane: Input Container */}
+        <section className="flex w-full flex-col border-r border-white/5 bg-white/[0.01] p-6 lg:w-[45%] lg:p-8">
+          <div className="mb-4">
+            <h2 className="flex items-center gap-2 text-sm font-medium text-zinc-300">
+              <Mail className="h-4 w-4 text-blue-400" /> Source Thread
+            </h2>
+            <p className="mt-1 text-xs text-zinc-500">
+              Paste your raw email exchange below.
+            </p>
+          </div>
+
+          <div className="group relative flex flex-1 flex-col overflow-hidden rounded-2xl border border-white/10 bg-black/40 shadow-inner transition-all focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/50 min-h-[300px] lg:min-h-0">
+            <textarea
+              value={thread}
+              onChange={(e) => setThread(e.target.value)}
+              placeholder="e.g. 'Hi team, we need to push the deadline by 2 weeks because...'"
+              className="h-full w-full resize-none bg-transparent p-6 pr-12 text-sm leading-relaxed text-zinc-300 placeholder-zinc-600 focus:outline-none"
+            />
+            {thread.length > 0 && (
+              <button
+                onClick={() => {
+                  setThread("");
+                  setReport(null); // Optional: clears report when text is cleared
+                }}
+                className="absolute right-4 top-4 rounded-full bg-white/5 p-1.5 text-zinc-400 transition-all hover:bg-red-500/20 hover:text-red-400 active:scale-95 z-20"
+                title="Clear text"
+              >
+                <X className="h-4 w-4 shrink-0" />
+              </button>
+            )}
+          </div>
+
+          {errorMsg && (
+            <div className="mt-4 flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-red-400 animate-in fade-in slide-in-from-top-2 shadow-lg shadow-red-500/5">
+              <AlertTriangle className="h-5 w-5 shrink-0" />
+              <p className="text-sm font-medium">{errorMsg}</p>
             </div>
-            
-            {/* Base Grid for the 5 responses */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              
-              {/* Output 1: Thread Summary (Span 2/3 columns) */}
-              <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-pink-500/50"></div>
-                <h3 className="flex items-center gap-2 font-medium text-white mb-4">
-                  <FileText className="h-5 w-5 text-pink-400" /> Executive Summary
+          )}
+
+          <div className="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
+            <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-medium">
+              <Shield className="h-3.5 w-3.5 text-zinc-400" /> End-to-end
+              encrypted processing
+            </div>
+            <button
+              onClick={handleAnalyze}
+              disabled={isAnalyzing || !thread.trim()}
+              className="w-full rounded-xl bg-white px-8 py-3.5 text-sm font-semibold text-black transition-all hover:scale-[1.02] hover:bg-zinc-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 sm:w-auto shadow-lg shadow-white/10"
+            >
+              {isAnalyzing ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Activity className="h-4 w-4 animate-spin text-blue-500" />{" "}
+                  Decoding...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <BrainCircuit className="h-4 w-4 text-blue-500 group-hover:rotate-12 transition-transform" />{" "}
+                  Analyze Thread
+                </span>
+              )}
+            </button>
+          </div>
+        </section>
+
+        {/* Right Pane: Results Output */}
+        <section className="flex-1 overflow-y-auto p-6 lg:p-10 bg-[#030712] relative scroll-smooth custom-scrollbar">
+          {/* Empty State */}
+          {!report && !isAnalyzing && (
+            <div className="flex h-full max-w-sm flex-col items-center justify-center text-center mx-auto opacity-40">
+              <div className="rounded-full bg-white/5 p-6 mb-6 inline-flex border border-white/10 shadow-[0_0_30px_rgba(255,255,255,0.05)]">
+                <BrainCircuit className="h-10 w-10 text-zinc-400" />
+              </div>
+              <h3 className="mb-2 text-lg font-medium text-white font-heading">
+                Awaiting Input
+              </h3>
+              <p className="text-sm text-zinc-400 leading-relaxed">
+                Paste your email thread on the left and click Analyze to
+                instantly generate your intelligence report.
+              </p>
+            </div>
+          )}
+
+          {/* Loading State */}
+          {isAnalyzing && (
+            <div className="flex h-full flex-col items-center justify-center text-center animate-in fade-in duration-500">
+              <div className="relative inline-flex mb-8">
+                <div className="absolute inset-0 rounded-full bg-blue-500 blur-xl opacity-20 animate-pulse"></div>
+                <div className="rounded-full border border-blue-500/30 bg-blue-500/10 p-5 relative z-10">
+                  <Activity className="h-8 w-8 text-blue-400 animate-spin" />
+                </div>
+              </div>
+              <h3 className="mb-2 text-lg font-medium text-white tracking-tight font-heading">
+                Extracting Intelligence...
+              </h3>
+              <p className="max-w-[260px] text-sm text-zinc-400 leading-relaxed">
+                Scanning tone, extracting action items, and drafting your
+                perfect reply.
+              </p>
+            </div>
+          )}
+
+          {/* Success Results State */}
+          {report && !isAnalyzing && (
+            <div className="mx-auto max-w-3xl space-y-8 pb-20 animate-in fade-in slide-in-from-bottom-8 duration-700">
+              {/* Executive Summary */}
+              <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] p-8 backdrop-blur-xl transition-colors hover:bg-white/[0.04] shadow-2xl shadow-black/50">
+                <div className="absolute left-0 top-0 h-1 w-full bg-linear-to-r from-blue-500 to-orange-500 opacity-60"></div>
+                <h3 className="mb-4 flex items-center gap-2 font-semibold text-white">
+                  <FileText className="h-4 w-4 text-orange-400" /> Executive
+                  Summary
                 </h3>
-                <p className="text-zinc-300 leading-relaxed text-sm">
-                  The client is concerned about the Q3 delivery timeline for the new enterprise features. They are threatening to halt the contractual payment until a firm delivery date is established in writing. John from Engineering noted that a 2-week delay is unavoidable due to recent AWS outages, but this hasn&apos;t been effectively communicated to the client yet.
+                <p className="text-sm leading-8 text-zinc-300">
+                  {report.summary}
                 </p>
               </div>
 
-              {/* Output 3: Tone & Urgency (Span 1/3 columns) */}
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm flex flex-col shadow-xl">
-                <h3 className="flex items-center gap-2 font-medium text-white mb-4">
-                  <Activity className="h-5 w-5 text-orange-400" /> Tone & Urgency
-                </h3>
-                
-                <div className="mb-5">
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-zinc-400">Emotional Tone</span>
-                    <span className="text-red-400 font-semibold">Frustrated</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-linear-to-r from-yellow-500 to-red-500 w-[85%]"></div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-zinc-400">Urgency Level</span>
-                    <span className="text-orange-400 font-semibold">High Priority</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-orange-500 w-[90%]"></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Output 5: Red Flags / Risks (Span 1/3 columns) */}
-              <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6 backdrop-blur-sm shadow-xl">
-                <h3 className="flex items-center gap-2 font-medium text-red-400 mb-4">
-                  <AlertTriangle className="h-5 w-5" /> Risks & Red Flags
-                </h3>
-                <ul className="space-y-3">
-                  <li className="text-sm text-zinc-300 flex items-start gap-2">
-                    <span className="text-red-500 mt-0.5 shrink-0">•</span> 
-                    Explicitly mentioned &quot;withholding Q3 payment&quot;.
-                  </li>
-                  <li className="text-sm text-zinc-300 flex items-start gap-2">
-                    <span className="text-red-500 mt-0.5 shrink-0">•</span> 
-                    The legal team was CC&apos;d on their final message.
-                  </li>
-                </ul>
-              </div>
-
-              {/* Output 2: Action Items (Span 2/3 columns) */}
-              <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-green-500/50"></div>
-                <h3 className="flex items-center gap-2 font-medium text-green-400 mb-4">
-                  <CheckCircle2 className="h-5 w-5" /> Recommended Action Items
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-black/40 border border-white/5">
-                    <div className="h-6 w-6 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</div>
-                    <div>
-                      <h4 className="text-sm font-medium text-white">Draft revised Q3 timeline</h4>
-                      <p className="text-xs text-zinc-400 mt-1">Owner: John (Engineering) • Due: EOD</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-black/40 border border-white/5">
-                    <div className="h-6 w-6 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</div>
-                    <div>
-                      <h4 className="text-sm font-medium text-white">Schedule 15-min sync with client</h4>
-                      <p className="text-xs text-zinc-400 mt-1">Owner: Account Manager • Due: ASAP</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Output 4: Professional Reply (Full Width - Span 3/3 columns) */}
-              <div className="md:col-span-3 rounded-2xl border border-purple-500/30 bg-purple-500/5 p-6 backdrop-blur-sm relative group mt-2 shadow-[0_0_30px_rgba(168,85,247,0.1)]">
-                <div className="absolute top-0 left-0 w-1 h-full bg-purple-500/50"></div>
-                
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="flex items-center gap-2 font-medium text-purple-300">
-                    <Sparkles className="h-5 w-5" /> AI Drafted Reply
+              {/* 2-Column Grid for Metrics and Actions */}
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {/* Tone Metrics */}
+                <div className="flex flex-col rounded-2xl border border-white/5 bg-white/[0.02] p-7 backdrop-blur-xl transition-colors hover:bg-white/[0.04] shadow-xl shadow-black/50">
+                  <h3 className="mb-6 flex items-center gap-2 font-semibold text-white">
+                    <Activity className="h-4 w-4 text-orange-400" /> Tone
+                    Metrics
                   </h3>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs border border-purple-500/20 bg-purple-500/10 px-2.5 py-1 rounded-md text-purple-200 hidden sm:block">
-                      Tone: De-escalating & Firm
-                    </span>
-                    <button className="flex items-center gap-1.5 text-xs bg-white text-black px-3 py-1.5 rounded-lg font-medium hover:bg-zinc-200 transition-colors active:scale-95">
-                      <Copy className="h-3.5 w-3.5" /> Copy to Clipboard
+
+                  <div className="space-y-6 flex-1 flex flex-col justify-center">
+                    <div>
+                      <div className="mb-2.5 flex justify-between text-xs">
+                        <span className="text-zinc-400">Dominant Emotion</span>
+                        <span className="font-medium text-white">
+                          {report.tone.emotionalTone}
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full border border-white/5 bg-black/60 shadow-inner">
+                        <div
+                          className="h-full bg-linear-to-r from-emerald-400 via-yellow-500 to-red-500 transition-all duration-1000"
+                          style={{ width: `${report.tone.toneScorePercent}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="mb-2.5 flex justify-between text-xs">
+                        <span className="text-zinc-400">Urgency Level</span>
+                        <span className="font-medium text-white">
+                          {report.tone.urgencyLevel}
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full border border-white/5 bg-black/60 shadow-inner">
+                        <div
+                          className="h-full bg-orange-500 transition-all duration-1000 shadow-[0_0_10px_rgba(249,115,22,0.8)]"
+                          style={{
+                            width: `${report.tone.urgencyScorePercent}%`,
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Items */}
+                <div className="flex flex-col rounded-2xl border border-white/5 bg-white/[0.02] p-7 backdrop-blur-xl transition-colors hover:bg-white/[0.04] shadow-xl shadow-black/50">
+                  <h3 className="mb-6 flex items-center gap-2 font-semibold text-white">
+                    <CheckCircle2 className="h-4 w-4 text-green-400" /> Action
+                    Items
+                  </h3>
+                  {report.actionItems && report.actionItems.length > 0 ? (
+                    <ul className="space-y-5 flex-1">
+                      {report.actionItems.map((item, idx) => (
+                        <li key={idx} className="flex gap-4 text-sm">
+                          <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-500/10 text-[10px] font-bold text-green-400 border border-green-500/20">
+                            {idx + 1}
+                          </div>
+                          <div>
+                            <p className="font-medium text-zinc-200 leading-snug">
+                              {item.task}
+                            </p>
+                            <p className="mt-2 flex items-center gap-3 text-[11px] text-zinc-500 font-mono tracking-tight">
+                              <span className="flex items-center gap-1.5">
+                                <Shield className="h-3 w-3 opacity-70" />{" "}
+                                {item.owner}
+                              </span>
+                              <span className="flex items-center gap-1.5">
+                                <Clock className="h-3 w-3 opacity-70" />{" "}
+                                {item.due}
+                              </span>
+                            </p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center flex-1 text-zinc-500 opacity-60">
+                      <CheckCircle2 className="mb-3 h-8 w-8 opacity-20" />
+                      <p className="text-xs">No pending actions required.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Risks & Red Flags */}
+              {report.flags && report.flags.length > 0 && (
+                <div className="rounded-2xl border border-red-500/20 bg-linear-to-br from-red-500/10 to-red-500/5 p-8 backdrop-blur-xl shadow-2xl shadow-red-500/5">
+                  <h3 className="mb-5 flex items-center gap-2 font-semibold text-red-400">
+                    <Flame className="h-4 w-4" /> Critical Risks Detected
+                  </h3>
+                  <ul className="space-y-3">
+                    {report.flags.map((flag, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-start gap-3 rounded-xl border border-red-500/10 bg-black/40 p-4 text-sm text-zinc-200 shadow-inner"
+                      >
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-500 opacity-80" />
+                        <span className="leading-relaxed">{flag}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Generated Reply */}
+              <div className="group relative rounded-2xl border border-blue-500/30 bg-linear-to-b from-blue-500/10 to-transparent p-[1px] shadow-[0_0_40px_rgba(59,130,246,0.1)] transition-all hover:shadow-[0_0_60px_rgba(59,130,246,0.15)]">
+                <div className="rounded-[15px] bg-[#030712]/90 p-8 backdrop-blur-xl">
+                  <div className="mb-6 flex items-center justify-between border-b border-white/5 pb-5">
+                    <h3 className="flex items-center gap-2 font-semibold text-blue-300">
+                      <Sparkles className="h-4 w-4" /> AI Drafted Response
+                    </h3>
+                    <button
+                      onClick={handleCopy}
+                      className="flex items-center gap-1.5 rounded-lg bg-white/5 px-4 py-2 text-xs font-semibold text-zinc-300 transition-all hover:bg-white/10 hover:text-white active:scale-95 border border-white/10"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="h-3.5 w-3.5 text-green-400" />{" "}
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3.5 w-3.5 text-zinc-400" /> Copy to
+                          Clipboard
+                        </>
+                      )}
                     </button>
                   </div>
-                </div>
-                
-                <div className="bg-[#030712]/80 border border-white/10 rounded-xl p-5 text-sm text-zinc-300 leading-relaxed font-sans shadow-inner selection:bg-purple-500/30">
-                  Hi [Client Name],<br/><br/>
-                  I completely understand your frustration regarding the Q3 delivery timeline. Transparency is our top priority, and I want to provide you with a concrete update.<br/><br/>
-                  Due to recent external infrastructure outages, our engineering team requires an additional two weeks to ensure the enterprise features are stable and fully tested before deployment. We are actively working to compress this timeline where possible without sacrificing quality.<br/><br/>
-                  Could we schedule a quick 15-minute call tomorrow morning to review the new project roadmap? We value your partnership and want to ensure you are fully confident in our adjusted delivery plan.<br/><br/>
-                  Best regards,<br/>
-                  [Your Name]
+
+                  <div className="font-sans text-sm leading-[1.8] text-zinc-300 whitespace-pre-wrap selection:bg-blue-500/30">
+                    {report.reply}
+                  </div>
                 </div>
               </div>
-
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </section>
+      </main>
     </div>
   );
 }
